@@ -202,9 +202,42 @@
       document.getElementById("sendMessage").style.display = "none";
     });
 
-    document.getElementById("sendButton").addEventListener("click", () => {
-      document.getElementById("sendMessage").style.display = "block";
-    });
+document.getElementById("sendButton").addEventListener("click", async () => {
+
+  const image = canvas.toDataURL("image/png");
+
+  try {
+
+    const response = await fetch(
+      "https://bskeguuxbpoejhxbipmg.supabase.co/functions/v1/send-fax",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sender: "zoe",
+          receiver: "manu",
+          image: image
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Senden fehlgeschlagen");
+    }
+
+    document.getElementById("sendMessage").style.display = "block";
+
+  } catch (error) {
+
+    alert("Das Fax konnte nicht gesendet werden.");
+
+    console.error(error);
+
+  }
+
+});
   </script>
 
 </body>
