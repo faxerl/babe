@@ -53,6 +53,7 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 4px 4px 0 #302d2b;
+      position: relative;
     }
 
     canvas {
@@ -61,6 +62,60 @@
       height: 360px;
       touch-action: none;
       cursor: crosshair;
+    }
+
+    .tools {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 18px;
+    }
+
+    .tools button {
+      border: 2px solid #302d2b;
+      background: white;
+      color: #302d2b;
+      border-radius: 6px;
+      padding: 7px 11px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 #302d2b;
+    }
+
+    .tools button.active {
+      background: #302d2b;
+      color: white;
+    }
+
+    .size-dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      background: currentColor;
+      border-radius: 50%;
+      vertical-align: middle;
+    }
+
+    .size-dot.medium {
+      width: 9px;
+      height: 9px;
+    }
+
+    .size-dot.large {
+      width: 14px;
+      height: 14px;
+    }
+
+    .size-dot.xlarge {
+      width: 19px;
+      height: 19px;
+    }
+
+    .size-dot.xxlarge {
+      width: 25px;
+      height: 25px;
     }
 
     .buttons {
@@ -91,6 +146,20 @@
       margin-top: 20px;
       font-size: 25px;
     }
+
+    .text-input {
+      position: absolute;
+      display: none;
+      border: 2px dashed #302d2b;
+      background: rgba(255,255,255,0.9);
+      color: #302d2b;
+      outline: none;
+      font-size: 20px;
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 3px 5px;
+      min-width: 120px;
+      max-width: 90%;
+    }
   </style>
 </head>
 
@@ -106,6 +175,46 @@
 
     <div class="paper">
       <canvas id="canvas"></canvas>
+
+      <input
+        id="textInput"
+        class="text-input"
+        type="text"
+        autocomplete="off"
+        placeholder="Text..."
+      >
+    </div>
+
+    <div class="tools">
+
+      <button id="brushButton" class="active">
+        ✎
+      </button>
+
+      <button class="sizeButton active" data-size="2">
+        <span class="size-dot"></span>
+      </button>
+
+      <button class="sizeButton" data-size="4">
+        <span class="size-dot medium"></span>
+      </button>
+
+      <button class="sizeButton" data-size="7">
+        <span class="size-dot large"></span>
+      </button>
+
+      <button class="sizeButton" data-size="12">
+        <span class="size-dot xlarge"></span>
+      </button>
+
+      <button class="sizeButton" data-size="20">
+        <span class="size-dot xxlarge"></span>
+      </button>
+
+      <button id="textButton">
+        T
+      </button>
+
     </div>
 
     <div class="buttons">
@@ -122,9 +231,24 @@
   <script>
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
+    const textInput = document.getElementById("textInput");
+
+    let drawing = false;
+    let textMode = false;
+    let textX = 0;
+    let textY = 0;
+    let brushSize = 2;
 
     function resizeCanvas() {
       const rect = canvas.getBoundingClientRect();
+
+      const oldCanvas = document.createElement("canvas");
+      oldCanvas.width = canvas.width;
+      oldCanvas.height = canvas.height;
+
+      if (canvas.width && canvas.height) {
+        oldCanvas.getContext("2d").drawImage(canvas, 0, 0);
+      }
 
       canvas.width = rect.width;
       canvas.height = rect.height;
@@ -132,16 +256,32 @@
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      if (oldCanvas.width && oldCanvas.height) {
+        ctx.drawImage(
+          oldCanvas,
+          0,
+          0,
+          oldCanvas.width,
+          oldCanvas.height,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+      }
+
+      setupBrush();
+    }
+
+    function setupBrush() {
       ctx.strokeStyle = "#302d2b";
-      ctx.lineWidth = 3;
+      ctx.lineWidth = brushSize;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
     }
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
-
-    let drawing = false;
 
     function getPosition(event) {
       const rect = canvas.getBoundingClientRect();
@@ -152,7 +292,25 @@
       };
     }
 
+    // Zeichnen
     canvas.addEventListener("pointerdown", (event) => {
+
+      if (textMode) {
+        const position = getPosition(event);
+
+        textX = position.x;
+        textY = position.y;
+
+        textInput.style.left = textX + "px";
+        textInput.style.top = textY + "px";
+        textInput.style.display = "block";
+
+        textInput.value = "";
+        textInput.focus();
+
+        return;
+      }
+
       drawing = true;
 
       const position = getPosition(event);
@@ -164,7 +322,8 @@
     });
 
     canvas.addEventListener("pointermove", (event) => {
-      if (!drawing) return;
+
+      if (!drawing || textMode) return;
 
       const position = getPosition(event);
 
@@ -182,18 +341,98 @@
       ctx.closePath();
     });
 
+    // Pinsel aktivieren
+    document.getElementById("brushButton").addEventListener("click", () => {
+      textMode = false;
+
+      document.getElementById("brushButton").classList.add("active");
+      document.getElementById("textButton").classList.remove("active");
+
+      textInput.style.display = "none";
+
+      canvas.style.cursor = "crosshair";
+    });
+
+    // Pinselgrössen
+    document.querySelectorAll(".sizeButton").forEach(button => {
+
+      button.addEventListener("click", () => {
+
+        document.querySelectorAll(".sizeButton").forEach(b => {
+          b.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        brushSize = Number(button.dataset.size);
+
+        setupBrush();
+
+        textMode = false;
+
+        document.getElementById("brushButton").classList.add("active");
+        document.getElementById("textButton").classList.remove("active");
+
+        textInput.style.display = "none";
+
+        canvas.style.cursor = "crosshair";
+      });
+
+    });
+
+    // Textmodus
+    document.getElementById("textButton").addEventListener("click", () => {
+
+      textMode = true;
+
+      document.getElementById("textButton").classList.add("active");
+      document.getElementById("brushButton").classList.remove("active");
+
+      textInput.style.display = "none";
+
+      canvas.style.cursor = "text";
+    });
+
+    // Text auf Canvas schreiben
+    textInput.addEventListener("keydown", (event) => {
+
+      if (event.key === "Enter") {
+
+        const text = textInput.value.trim();
+
+        if (text) {
+          ctx.fillStyle = "#302d2b";
+          ctx.font = "20px Arial";
+          ctx.textBaseline = "top";
+
+          ctx.fillText(text, textX, textY);
+        }
+
+        textInput.style.display = "none";
+        textInput.value = "";
+      }
+
+      if (event.key === "Escape") {
+        textInput.style.display = "none";
+        textInput.value = "";
+      }
+    });
+
+    // Löschen
     document.getElementById("clearButton").addEventListener("click", () => {
+
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = "#302d2b";
-      ctx.lineWidth = 3;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      setupBrush();
+
+      textInput.style.display = "none";
+      textInput.value = "";
 
       document.getElementById("sendMessage").style.display = "none";
     });
 
+    // SENDEN – bleibt wie bisher
     document.getElementById("sendButton").addEventListener("click", async () => {
 
       const image = canvas.toDataURL("image/png");
