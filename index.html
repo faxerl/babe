@@ -42,7 +42,7 @@
       justify-content: center;
       align-items: center;
       gap: 7px;
-      margin: 10px auto;
+      margin: 8px auto;
       max-width: 700px;
     }
 
@@ -73,6 +73,8 @@
 
     .brush {
       min-width: 42px;
+      padding-left: 10px;
+      padding-right: 10px;
       font-weight: normal;
     }
 
@@ -108,40 +110,47 @@
   <h1>FAXERL</h1>
 
   <div class="kaomoji">
-    &lt;3 (ɔˆз(ˆ⌣ˆc)
+    ❤️ (ɔˆз(ˆ⌣ˆc)
   </div>
 
   <div class="participants">
     Zoë ↔ Manu
   </div>
 
-  <!-- Hauptwerkzeuge -->
+
+  <!-- ZEILE 1: STIFTERL + 3 PUNKTGRÖSSEN -->
   <div class="toolbar">
 
     <button id="penButton" class="active">
       Stifterl
     </button>
 
-    <button id="eraserButton">
-      Schwammerl
+    <button class="brush active" data-size="2">
+      •
     </button>
 
-    <!-- 3 Punktgrössen -->
-    <button class="brush active" data-size="2">•</button>
-    <button class="brush" data-size="6">●</button>
-    <button class="brush" data-size="12">⬤</button>
+    <button class="brush" data-size="6">
+      ●
+    </button>
 
-    <!-- Text -->
+    <button class="brush" data-size="12">
+      ⬤
+    </button>
+
+  </div>
+
+
+  <!-- ZEILE 2: TEXTERL + B + SCHRIFT + GRÖSSE -->
+  <div class="toolbar">
+
     <button id="textButton">
-      T
+      Texterl
     </button>
 
-    <!-- Fett -->
     <button id="boldButton">
-      <b>B</b>
+      B
     </button>
 
-    <!-- Schrift -->
     <select id="fontSelect">
       <option value="Arial">Arial</option>
       <option value="Courier New">Courier New</option>
@@ -149,7 +158,6 @@
       <option value="Bangers">Comic</option>
     </select>
 
-    <!-- Schriftgrösse -->
     <select id="fontSize">
       <option value="16">16</option>
       <option value="20" selected>20</option>
@@ -157,9 +165,18 @@
       <option value="34">34</option>
     </select>
 
-    <!-- Foto -->
+  </div>
+
+
+  <!-- ZEILE 3: PFÖTELI + SCHWAMMERL -->
+  <div class="toolbar">
+
     <button id="photoButton">
       Pföteli
+    </button>
+
+    <button id="eraserButton">
+      Schwammerl
     </button>
 
     <input
@@ -170,12 +187,14 @@
 
   </div>
 
-  <!-- Foto-Werkzeuge -->
+
+  <!-- FOTO-OPTIONEN -->
   <div
     class="toolbar"
     id="photoTools"
     style="display:none;"
   >
+
     <button id="photoOriginal">
       Original
     </button>
@@ -187,16 +206,19 @@
     <button id="photoDelete">
       Foto löschen
     </button>
+
   </div>
 
-  <!-- Zeichenfläche -->
+
+  <!-- ZEICHENFLÄCHE -->
   <canvas
     id="canvas"
     width="700"
     height="500"
   ></canvas>
 
-  <!-- Unten -->
+
+  <!-- UNTEN -->
   <div class="bottom">
 
     <button id="clearButton">
@@ -212,8 +234,12 @@
 
   <script>
 
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
+    const canvas =
+      document.getElementById("canvas");
+
+    const ctx =
+      canvas.getContext("2d");
+
 
     const penButton =
       document.getElementById("penButton");
@@ -268,23 +294,33 @@
     let photoIsDrawing = false;
 
 
-    // Canvas am Anfang weiss
-    ctx.fillStyle = "white";
-    ctx.fillRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    // WEISSE ZEICHENFLÄCHE
+    function clearCanvas() {
+
+      ctx.globalCompositeOperation =
+        "source-over";
+
+      ctx.fillStyle = "white";
+
+      ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+
+    clearCanvas();
 
 
-    // Position auf dem Canvas bestimmen
+    // POSITION
     function getPosition(e) {
 
       const rect =
         canvas.getBoundingClientRect();
 
       return {
+
         x:
           (e.clientX - rect.left) *
           (canvas.width / rect.width),
@@ -292,20 +328,29 @@
         y:
           (e.clientY - rect.top) *
           (canvas.height / rect.height)
+
       };
     }
 
 
-    // Zeichnen starten
+    // ZEICHNEN STARTEN
     function startDrawing(e) {
 
-      const pos = getPosition(e);
+      const pos =
+        getPosition(e);
 
-      // Textmodus
+
+      // TEXT
       if (textMode) {
-        addText(pos.x, pos.y);
+
+        addText(
+          pos.x,
+          pos.y
+        );
+
         return;
       }
+
 
       drawing = true;
 
@@ -318,33 +363,42 @@
     }
 
 
-    // Zeichnen
+    // ZEICHNEN
     function draw(e) {
 
       if (!drawing || textMode) {
         return;
       }
 
-      const pos = getPosition(e);
 
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      const pos =
+        getPosition(e);
+
+
+      ctx.lineWidth =
+        brushSize;
+
+      ctx.lineCap =
+        "round";
+
+      ctx.lineJoin =
+        "round";
 
 
       if (mode === "eraser") {
 
-        // Radieren
+        // SCHWAMMERL
         ctx.globalCompositeOperation =
           "destination-out";
 
       } else {
 
-        // Stift
+        // STIFTERL
         ctx.globalCompositeOperation =
           "source-over";
 
-        ctx.strokeStyle = "#111";
+        ctx.strokeStyle =
+          "#111";
       }
 
 
@@ -377,7 +431,6 @@
     }
 
 
-    // Maus + Touch / Stift
     canvas.addEventListener(
       "pointerdown",
       startDrawing
@@ -395,11 +448,6 @@
 
     canvas.addEventListener(
       "pointercancel",
-      stopDrawing
-    );
-
-    canvas.addEventListener(
-      "pointerleave",
       stopDrawing
     );
 
@@ -458,7 +506,7 @@
     );
 
 
-    // 3 Punktgrössen
+    // PUNKTGRÖSSEN
     document
       .querySelectorAll(".brush")
       .forEach(button => {
@@ -472,6 +520,7 @@
                 button.dataset.size
               );
 
+
             document
               .querySelectorAll(".brush")
               .forEach(b =>
@@ -480,9 +529,11 @@
                 )
               );
 
+
             button.classList.add(
               "active"
             );
+
 
             mode = "pen";
 
@@ -499,12 +550,14 @@
       });
 
 
-    // TEXT
+    // TEXTERL
     textButton.addEventListener(
       "click",
       () => {
 
-        textMode = !textMode;
+        textMode =
+          !textMode;
+
 
         textButton.classList.toggle(
           "active",
@@ -532,39 +585,45 @@
           canvas.style.cursor =
             "crosshair";
         }
-
       }
     );
 
 
-    // FETT
+    // BOLD
     boldButton.addEventListener(
       "click",
       () => {
 
-        bold = !bold;
+        bold =
+          !bold;
 
         boldButton.classList.toggle(
           "active",
           bold
         );
-
       }
     );
 
 
-    // Text hinzufügen
+    // TEXT EINFÜGEN
     function addText(x, y) {
 
       const text =
-        prompt("Text eingeben:");
+        prompt(
+          "Text eingeben:"
+        );
+
 
       if (!text) {
         return;
       }
 
+
       const size =
-        Number(fontSize.value);
+        Number(
+          fontSize.value
+        );
+
 
       const font =
         fontSelect.value;
@@ -573,12 +632,17 @@
       ctx.globalCompositeOperation =
         "source-over";
 
-      ctx.fillStyle = "#111";
+      ctx.fillStyle =
+        "#111";
+
 
       ctx.font =
         `${bold ? "bold " : ""}${size}px "${font}"`;
 
-      ctx.textBaseline = "top";
+
+      ctx.textBaseline =
+        "top";
+
 
       ctx.fillText(
         text,
@@ -588,7 +652,7 @@
     }
 
 
-    // PFÖTELI / Foto
+    // PFÖTELI
     photoButton.addEventListener(
       "click",
       () => {
@@ -604,6 +668,7 @@
 
         const file =
           e.target.files[0];
+
 
         if (!file) {
           return;
@@ -624,7 +689,8 @@
             img.onload =
               () => {
 
-                photo = img;
+                photo =
+                  img;
 
                 photoIsDrawing =
                   false;
@@ -646,7 +712,7 @@
     );
 
 
-    // Foto zeichnen
+    // FOTO AUF CANVAS
     function drawPhoto() {
 
       if (!photo) {
@@ -657,7 +723,10 @@
       ctx.globalCompositeOperation =
         "source-over";
 
-      ctx.fillStyle = "white";
+
+      ctx.fillStyle =
+        "white";
+
 
       ctx.fillRect(
         0,
@@ -677,12 +746,14 @@
       const width =
         photo.width * scale;
 
+
       const height =
         photo.height * scale;
 
 
       const x =
         (canvas.width - width) / 2;
+
 
       const y =
         (canvas.height - height) / 2;
@@ -700,14 +771,16 @@
 
       } else {
 
-        // Foto als Zeichnung
+        // FOTO ALS ZEICHNUNG
         const temp =
           document.createElement(
             "canvas"
           );
 
+
         temp.width =
           photo.width;
+
 
         temp.height =
           photo.height;
@@ -784,7 +857,7 @@
     }
 
 
-    // Original
+    // ORIGINAL
     photoOriginal.addEventListener(
       "click",
       () => {
@@ -797,7 +870,7 @@
     );
 
 
-    // Zeichnung
+    // ZEICHNUNG
     photoDrawing.addEventListener(
       "click",
       () => {
@@ -810,12 +883,13 @@
     );
 
 
-    // Foto löschen
+    // FOTO LÖSCHEN
     photoDelete.addEventListener(
       "click",
       () => {
 
-        photo = null;
+        photo =
+          null;
 
         photoIsDrawing =
           false;
@@ -827,28 +901,18 @@
           "";
 
 
-        ctx.globalCompositeOperation =
-          "source-over";
-
-        ctx.fillStyle =
-          "white";
-
-        ctx.fillRect(
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
+        clearCanvas();
       }
     );
 
 
-    // Alles löschen
+    // ALLES LÖSCHEN
     clearButton.addEventListener(
       "click",
       () => {
 
-        photo = null;
+        photo =
+          null;
 
         photoIsDrawing =
           false;
@@ -860,18 +924,7 @@
           "";
 
 
-        ctx.globalCompositeOperation =
-          "source-over";
-
-        ctx.fillStyle =
-          "white";
-
-        ctx.fillRect(
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
+        clearCanvas();
       }
     );
 
