@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>faxerl</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+
   <style>
     * {
       box-sizing: border-box;
@@ -73,12 +77,13 @@
       margin-top: 18px;
     }
 
-    .tools button {
+    .tools button,
+    .tools select {
       border: 2px solid #302d2b;
       background: white;
       color: #302d2b;
       border-radius: 6px;
-      padding: 7px 11px;
+      padding: 7px 10px;
       font-size: 14px;
       cursor: pointer;
       box-shadow: 2px 2px 0 #302d2b;
@@ -87,6 +92,10 @@
     .tools button.active {
       background: #302d2b;
       color: white;
+    }
+
+    .tools select {
+      appearance: auto;
     }
 
     .size-dot {
@@ -151,7 +160,7 @@
       position: absolute;
       display: none;
       border: 2px dashed #302d2b;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.95);
       color: #302d2b;
       outline: none;
       font-size: 20px;
@@ -159,6 +168,7 @@
       padding: 3px 5px;
       min-width: 120px;
       max-width: 90%;
+      z-index: 5;
     }
   </style>
 </head>
@@ -215,6 +225,24 @@
         T
       </button>
 
+      <button id="boldButton">
+        B
+      </button>
+
+      <select id="fontSelect">
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Comic Sans MS">Comic Sans MS</option>
+        <option value="Bangers">Comic</option>
+      </select>
+
+      <select id="fontSizeSelect">
+        <option value="16">16</option>
+        <option value="20" selected>20</option>
+        <option value="26">26</option>
+        <option value="34">34</option>
+      </select>
+
     </div>
 
     <div class="buttons">
@@ -238,6 +266,9 @@
     let textX = 0;
     let textY = 0;
     let brushSize = 2;
+    let boldText = false;
+    let selectedFont = "Arial";
+    let selectedFontSize = 20;
 
     function resizeCanvas() {
       const rect = canvas.getBoundingClientRect();
@@ -305,6 +336,10 @@
         textInput.style.top = textY + "px";
         textInput.style.display = "block";
 
+        textInput.style.fontFamily = selectedFont;
+        textInput.style.fontSize = selectedFontSize + "px";
+        textInput.style.fontWeight = boldText ? "bold" : "normal";
+
         textInput.value = "";
         textInput.focus();
 
@@ -322,7 +357,6 @@
     });
 
     canvas.addEventListener("pointermove", (event) => {
-
       if (!drawing || textMode) return;
 
       const position = getPosition(event);
@@ -341,8 +375,9 @@
       ctx.closePath();
     });
 
-    // Pinsel aktivieren
+    // Pinsel
     document.getElementById("brushButton").addEventListener("click", () => {
+
       textMode = false;
 
       document.getElementById("brushButton").classList.add("active");
@@ -393,6 +428,35 @@
       canvas.style.cursor = "text";
     });
 
+    // Fett
+    document.getElementById("boldButton").addEventListener("click", () => {
+
+      boldText = !boldText;
+
+      document.getElementById("boldButton").classList.toggle(
+        "active",
+        boldText
+      );
+
+      textInput.style.fontWeight = boldText ? "bold" : "normal";
+    });
+
+    // Schriftart
+    document.getElementById("fontSelect").addEventListener("change", (event) => {
+
+      selectedFont = event.target.value;
+
+      textInput.style.fontFamily = selectedFont;
+    });
+
+    // Schriftgrösse
+    document.getElementById("fontSizeSelect").addEventListener("change", (event) => {
+
+      selectedFontSize = Number(event.target.value);
+
+      textInput.style.fontSize = selectedFontSize + "px";
+    });
+
     // Text auf Canvas schreiben
     textInput.addEventListener("keydown", (event) => {
 
@@ -401,8 +465,16 @@
         const text = textInput.value.trim();
 
         if (text) {
+
           ctx.fillStyle = "#302d2b";
-          ctx.font = "20px Arial";
+
+          const weight = boldText ? "bold" : "normal";
+
+          ctx.font =
+            weight + " " +
+            selectedFontSize + "px " +
+            '"' + selectedFont + '"';
+
           ctx.textBaseline = "top";
 
           ctx.fillText(text, textX, textY);
@@ -413,6 +485,7 @@
       }
 
       if (event.key === "Escape") {
+
         textInput.style.display = "none";
         textInput.value = "";
       }
@@ -432,7 +505,7 @@
       document.getElementById("sendMessage").style.display = "none";
     });
 
-    // SENDEN – bleibt wie bisher
+    // SENDEN – unverändert
     document.getElementById("sendButton").addEventListener("click", async () => {
 
       const image = canvas.toDataURL("image/png");
